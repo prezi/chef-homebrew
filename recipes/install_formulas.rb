@@ -1,10 +1,8 @@
 #
-# Author:: Joshua Timberman (<jtimberman@chef.io>)
-# Author:: Graeme Mathieson (<mathie@woss.name>)
 # Cookbook Name:: homebrew
-# Attributes:: default
+# Recipes:: install_casks
 #
-# Copyright 2011-2013, Chef Software, Inc.
+# Copyright 2014-2015, Chef Software, Inc <legal@chef.io>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +17,15 @@
 # limitations under the License.
 #
 
-default['homebrew']['owner'] = nil
-default['homebrew']['auto-update'] = true
-default['homebrew']['casks'] = []
-default['homebrew']['formulas'] = node['homebrew']['formula'] || []
-default['homebrew']['taps'] = []
+include_recipe 'homebrew'
+
+node['homebrew']['formulas'].each do |formula|
+  if formula.class == Chef::Node::ImmutableMash
+    package formula.fetch(:name) do
+      options '--HEAD' if formula.fetch(:head, false)
+      version formula['version'] if formula.fetch(:version, false)
+    end
+  else
+    package formula
+  end
+end
